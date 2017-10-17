@@ -11,7 +11,7 @@
   <body>
     <h1>Guessing game</h1>
     <a href="/guess">New Game</a>
-    <h2>Guess a number between 1 and 20</h2>
+    <h2>{{.Message}}</h2>
     <form action="/guess" method="GET">
       <input type="text" name="guess">
       <input type="submit" value="Guess">
