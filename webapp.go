@@ -34,6 +34,7 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
+//Handler for the landing page
 func landingPageHandler(w http.ResponseWriter, r *http.Request) {
 	//Set the html hconent type
 	w.Header().Set("Content-Type", "text/html")
@@ -41,6 +42,7 @@ func landingPageHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "index.html")
 }
 
+//Handler for the guessing page
 func guessPageHandler(w http.ResponseWriter, r *http.Request) {
 	//Check if the cookie exist, if not then create it
 	checkAndSetTargetCookie(w, r)
@@ -69,6 +71,7 @@ func guessPageHandler(w http.ResponseWriter, r *http.Request) {
 	//http.ServeFile(w, r, "guess/guess.html")
 }
 
+//Function used to check if the target cookies is set or not. If not set it will set it.
 func checkAndSetTargetCookie(w http.ResponseWriter, r *http.Request) {
 	//Get the cookie
 	cookie, err := r.Cookie("target")
