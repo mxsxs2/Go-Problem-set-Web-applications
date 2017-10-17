@@ -15,7 +15,10 @@ func main() {
 
 //Handle the request
 func requestHandler(w http.ResponseWriter, r *http.Request) {
+	//Set the html hconent type
+	w.Header().Set("Content-Type", "text/html")
+
 	//Write the response
-	fmt.Fprintln(w, "Guessing game")
+	fmt.Fprintln(w, "<h1>Guessing game</h1>")
 
 }
