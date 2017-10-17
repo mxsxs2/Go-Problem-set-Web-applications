@@ -10,6 +10,10 @@ func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "index.html")
 	})
+	//Add the handler function for the guess folder
+	http.HandleFunc("/guess/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "guess/guess.html")
+	})
 	//Start a webserver which listens at port 8080
 	http.ListenAndServe(":8080", nil)
 }
