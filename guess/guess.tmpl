@@ -12,10 +12,11 @@
     <h1>Guessing game</h1>
     <a href="/guess">New Game</a>
     <h2>{{.Message}}</h2>
-    <form action="/guess" method="GET">
+    <form action="/guess/" method="GET">
       <input type="text" name="guess">
       <input type="submit" value="Guess">
     </form>
+    {{if .Guess}}<br>You guessed {{.Guess}}.{{end}}
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
