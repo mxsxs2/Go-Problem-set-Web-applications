@@ -2,7 +2,6 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"html/template"
@@ -18,14 +17,14 @@ const RANDMIN = 10
 
 //Struct for the template
 type Message struct {
-	Message string //The message
-	Guess   int    //The guessed number
+	Message      string //The message
+	GuessMessage string //The message after the guess
+	Guessed      int    //If the number was guessed
 }
 
 func main() {
 	//Seet the random generator once the application is started
 	rand.Seed(time.Now().UnixNano())
-
 	//Add the handler function for the landing page
 	http.HandleFunc("/", landingPageHandler)
 	//Add the handler function for the guess folder
@@ -46,45 +45,134 @@ func landingPageHandler(w http.ResponseWriter, r *http.Request) {
 func guessPageHandler(w http.ResponseWriter, r *http.Request) {
 	//Check if the cookie exist, if not then create it
 	checkAndSetTargetCookie(w, r)
-
+	//Reset the cookie if a new game was started
+	if checkNewGameParam(r) == 1 {
+		setTargetCookie(w)
+	}
 	//Set the html hconent type
 	w.Header().Set("Content-Type", "text/html")
 	//Parse the template file
 	gTemplate := template.Must(template.ParseFiles("guess/guess.tmpl"))
-
-	//Create the message
-	message := Message{
-		Message: "Guess a number between 1 and 20",
-	}
-
-	//Check if there is any guess was made
-	if guess, err := getGuessedNumberParameter(r); err == nil {
-		//Set the guessed number if there was any
-		message.Guess = guess
-	}
+	//Set the messages
+	message := setMessage(w, r)
 
 	//Merge the template with the message
 	gTemplate.Execute(w, message)
+}
 
-	//getRequestDetails(w, r)
+//Function used to set the messages
+func setMessage(w http.ResponseWriter, r *http.Request) Message {
+	//Create the message
+	message := Message{
+		Message: fmt.Sprintf("Guess a number between %d and %d", RANDMIN, RANDMAX),
+		Guessed: 0,
+	}
 
-	//http.ServeFile(w, r, "guess/guess.html")
+	//Compare the guess and the stored number
+	if result, guess, err := compareGuessToCookie(r); err == nil {
+		//If they equal
+		if result == 0 {
+			message.GuessMessage = "Congratulations! You guessed the number."
+			//Set the guessed number for the new game link
+			message.Guessed = 1
+		}
+		//If the guess was lower
+		if result == -1 {
+			message.GuessMessage = fmt.Sprintf("Your guess was %d which is too low.", guess)
+		}
+		//If the guess was higher
+		if result == 1 {
+			message.GuessMessage = fmt.Sprintf("Your guess was %d which is too high.", guess)
+		}
+	}
+	//Return the message
+	return message
+}
+
+//Function used to compare the guess and the stored cookie
+func compareGuessToCookie(r *http.Request) (int, int, error) {
+	//Holder for the values
+	var guess int
+	var cookieValue int
+	//Get the value of the cookie
+	if value, err := getTargetCookieValue(r); err == nil {
+		//Set the value
+		cookieValue = value
+	} else {
+		return 0, 0, errors.New("No cookie set")
+	}
+
+	//Get the value of the guess
+	if g, err := getGuessedNumberParameter(r); err == nil {
+		//Set the guessed number if there was any
+		guess = g
+	} else {
+		return 0, 0, errors.New("No guess parameter")
+	}
+
+	//If they equal
+	if guess == cookieValue {
+		return 0, guess, nil
+	}
+	//If the guess is lower
+	if guess < cookieValue {
+		return -1, guess, nil
+	}
+	//If the guess is higher
+	if guess > cookieValue {
+		return 1, guess, nil
+	}
+
+	//Return error
+	return 0, 0, errors.New("Nothing to compare")
+}
+
+//Function used to get the target cookie
+func getTargetCookieValue(r *http.Request) (int, error) {
+	//Get the cookie
+	cookie, err := r.Cookie("target")
+	//Check if cookie exists
+	if err == nil && cookie != nil {
+		//Try to parse the cookie's value
+		if value, err := strconv.ParseInt(cookie.Value, 10, 0); err == nil {
+			//Return the cookie
+			return int(value), nil
+		}
+		//Retrun not exists error
+		return 0, errors.New("Invalid value in cookie")
+	}
+	//Retrun not exists error
+	return 0, errors.New("Not exists")
 }
 
 //Function used to check if the target cookies is set or not. If not set it will set it.
 func checkAndSetTargetCookie(w http.ResponseWriter, r *http.Request) {
-	//Get the cookie
-	cookie, err := r.Cookie("target")
-
-	//Check if cookie doest not exists
-	if err != nil || cookie == nil {
-		//Create the random number
-		randomNumber := rand.Intn(RANDMAX-RANDMIN) + RANDMIN
-		//Create the cookie
-		cookie := http.Cookie{Name: "target", Value: strconv.Itoa(randomNumber), Expires: time.Now().Add(365 * 24 * time.Hour)}
-		//Set the cookie
-		http.SetCookie(w, &cookie)
+	//Check if the cookie exists. If not then set one
+	if _, err := getTargetCookieValue(r); err != nil {
+		setTargetCookie(w)
 	}
+}
+
+//Function used to set the target cookie
+func setTargetCookie(w http.ResponseWriter) {
+	//Create the random number
+	randomNumber := rand.Intn(RANDMAX-RANDMIN) + RANDMIN
+	//Create the cookie
+	cookie := http.Cookie{Name: "target", Value: strconv.Itoa(randomNumber), Expires: time.Now().Add(365 * 24 * time.Hour)}
+	//Set the cookie
+	http.SetCookie(w, &cookie)
+}
+
+//Function used to check for new game
+func checkNewGameParam(r *http.Request) int {
+	//Get the guess parameters. It might be more than one
+	newgame := r.URL.Query().Get("newgame")
+	//Check if it is empty
+	if newgame != "" {
+		//Return one if it exists
+		return 1
+	}
+	return 0
 }
 
 //Function used to get the guessed number form the url parameters
@@ -103,36 +191,4 @@ func getGuessedNumberParameter(r *http.Request) (int, error) {
 	}
 	//Return the no parameter present error
 	return 0, errors.New("No parameter present")
-}
-
-func getRequestDetails(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "r.Method:           ", r.Method)
-	fmt.Fprintln(w, "r.URL:              ", r.URL)
-	fmt.Fprintln(w, "r.Proto:            ", r.Proto)
-	fmt.Fprintln(w, "r.ContentLength:    ", r.ContentLength)
-	fmt.Fprintln(w, "r.TransferEncoding: ", r.TransferEncoding)
-	fmt.Fprintln(w, "r.Close:            ", r.Close)
-	fmt.Fprintln(w, "r.Host:             ", r.Host)
-	fmt.Fprintln(w, "r.Form:             ", r.Form)
-	fmt.Fprintln(w, "r.PostForm:         ", r.PostForm)
-	fmt.Fprintln(w, "r.RemoteAddr:       ", r.RemoteAddr)
-	fmt.Fprintln(w, "r.RequestURI:       ", r.RequestURI)
-
-	fmt.Fprintln(w, "r.URL.Opaque:       ", r.URL.Opaque)
-	fmt.Fprintln(w, "r.URL.Scheme:       ", r.URL.Scheme)
-	fmt.Fprintln(w, "r.URL.Host:         ", r.URL.Host)
-	fmt.Fprintln(w, "r.URL.Path:         ", r.URL.Path)
-	fmt.Fprintln(w, "r.URL.RawPath:      ", r.URL.RawPath)
-	fmt.Fprintln(w, "r.URL.RawQuery:     ", r.URL.RawQuery)
-	fmt.Fprintln(w, "r.URL.Fragment:     ", r.URL.Fragment)
-
-	fmt.Fprintln(w, "Header:")
-	for key, value := range r.Header {
-		fmt.Fprintln(w, "\t"+key+":", value)
-	}
-
-	body := new(bytes.Buffer)
-	body.ReadFrom(r.Body)
-
-	fmt.Fprintln(w, "r.Body:             ", body.String())
 }

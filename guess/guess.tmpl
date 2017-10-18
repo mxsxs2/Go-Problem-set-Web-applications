@@ -4,24 +4,51 @@
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
+    <title>Guessing Game</title>
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    
   </head>
-  <body>
+  <body class="container-fluid">
     <h1>Guessing game</h1>
-    <a href="/guess">New Game</a>
-    <h2>{{.Message}}</h2>
-    <form action="/guess/" method="GET">
-      <input type="text" name="guess">
-      <input type="submit" value="Guess">
-    </form>
-    {{if .Guess}}<br>You guessed {{.Guess}}.{{end}}
+    {{if not .Guessed}}
+      <a href="/guess" class="btn btn-primary"  role="button">New Game</a>
+      <h2>{{.Message}}</h2>
+      
+      <form action="/guess/" method="GET" id="guessForm">
+        <div class="input-group">
+          
+          <input type="text" name="guess" class="form-control">
+          <span class="input-group-btn">
+            <input type="submit" value="Guess" class="btn btn-default">
+          </span>
+        </div>
+      </form>
+    {{end}}
+    {{if .GuessMessage}}{{.GuessMessage}}{{end}}
+    {{if .Guessed}}<a href="/guess/?newgame=1"  class="btn btn-primary"  role="button">Start new game</a>{{end}}
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+    <!-- Load custom script -->
+    <script type="application/javascript">
+      //Wait until the document is loaded
+      jQuery(document).ready(function(){
+          //Set the focus on the field
+          jQuery("input[name='guess']").focus();
+          //Submit the form on enter 
+          jQuery("#guessForm").on("keypress",function(){
+            //If the key is enter
+            if (e.which == 13) {
+              //Submit the form
+              jQuery("#guessForm").submit();
+              return false;
+            }
+          })
+      });
+    </script>
   </body>
 </html>
