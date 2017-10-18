@@ -12,7 +12,8 @@
   <body class="container-fluid">
     <h1>Guessing game</h1>
     {{if not .Guessed}}
-      <a href="/guess" class="btn btn-primary"  role="button">New Game</a>
+      <a href="/guess/?newgame=1" class="btn btn-primary"  role="button">New Game</a>
+      <br><br>
       <h2>{{.Message}}</h2>
       
       <form action="/guess/" method="POST" id="guessForm">

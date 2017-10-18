@@ -17,6 +17,9 @@ import (
 const RANDMAX = 20
 const RANDMIN = 10
 
+//The default port number
+const PORT = 8080
+
 //Struct for the template
 type Message struct {
 	Message      string //The message
@@ -86,7 +89,7 @@ func guessPageHandler(w http.ResponseWriter, r *http.Request) {
 func setMessage(w http.ResponseWriter, r *http.Request) Message {
 	//Create the message
 	message := Message{
-		Message: fmt.Sprintf("Guess a number between %d and %d", RANDMIN, RANDMAX),
+		Message: fmt.Sprintf("Guess a number between %d and %d", getRandMin(), getRandMax()),
 		Guessed: 0,
 	}
 
@@ -178,7 +181,7 @@ func checkAndSetTargetCookie(w http.ResponseWriter, r *http.Request) {
 //Function used to set the target cookie
 func setTargetCookie(w http.ResponseWriter) {
 	//Create the random number
-	randomNumber := rand.Intn(RANDMAX-RANDMIN) + RANDMIN
+	randomNumber := rand.Intn(getRandMax()-getRandMin()) + getRandMin()
 	//Create the cookie
 	cookie := http.Cookie{Name: "target", Value: strconv.Itoa(randomNumber), Expires: time.Now().Add(365 * 24 * time.Hour)}
 	//Set the cookie
@@ -234,31 +237,60 @@ func isFlagOn(flag string) bool {
 }
 
 //Function used to get the port from the command line argument
-func getPort() int {
-	//Set 8080 as default port
-	port := 8080
-
+func getIntFlag(flag string, defaultValue int) int {
+	//Set default value
+	returnValue := defaultValue
 	//Check if there is any argument
 	if len(os.Args) > 1 {
 		//Loop the arguments
 		for i, arg := range os.Args {
 			//If the flag was found and there is a following argument
-			if strings.Compare(arg, "-port") == 0 && len(os.Args) > i+1 {
+			if strings.Compare(arg, flag) == 0 && len(os.Args) > i+1 {
 				//Try to parse that argument into an int
-				if p, err := strconv.Atoi(os.Args[i+1]); err == nil {
-					//Check if the port is within real parameters
-					//We could check here the reserved ports as well
-					if p > 0 && p < 65536 {
-						//If everything is fine set the port
-						port = p
-						//Exit the loop
-						break
-					}
+				if v, err := strconv.Atoi(os.Args[i+1]); err == nil {
+					returnValue = v
+					//Exit the loop
+					break
 				}
 			}
 		}
 	}
 
 	//Return the port
+	return returnValue
+}
+
+//Function used to get a valid port number
+func getPort() int {
+	//Set the default port
+	port := PORT
+	//Check if the port is within real parameters
+	//We could check here the reserved ports as well
+	if p := getIntFlag("-port", port); p > 0 && p < 65536 {
+		//If everything is fine set the port
+		port = p
+	}
+	//Return the port
 	return port
+}
+
+//Function used to get the minimum number for the random
+func getRandMin() int {
+	//Get the minimum number and return it
+	return getIntFlag("-min", RANDMIN)
+}
+
+//Function used to get the minimum number for the random
+func getRandMax() int {
+	//Get the maximum number and return it
+	max := getIntFlag("-max", RANDMAX)
+	//Get the minimum
+	min := getRandMin()
+	//If max is less then the minimum then set the minimum +2 to the max
+	//This is to make sure the program doesn't crash
+	if max <= min {
+		max = min + 2
+	}
+	//return max
+	return max
 }
