@@ -15,10 +15,9 @@
       <a href="/guess" class="btn btn-primary"  role="button">New Game</a>
       <h2>{{.Message}}</h2>
       
-      <form action="/guess/" method="GET" id="guessForm">
+      <form action="/guess/" method="POST" id="guessForm">
         <div class="input-group">
-          
-          <input type="text" name="guess" class="form-control">
+            <input type="text" name="guess" class="form-control">
           <span class="input-group-btn">
             <input type="submit" value="Guess" class="btn btn-default">
           </span>

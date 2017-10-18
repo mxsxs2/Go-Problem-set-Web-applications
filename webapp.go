@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -177,7 +178,22 @@ func checkNewGameParam(r *http.Request) int {
 
 //Function used to get the guessed number form the url parameters
 func getGuessedNumberParameter(r *http.Request) (int, error) {
-	//Get the guess parameters. It might be more than one
+	//POST adapted from https://astaxie.gitbooks.io/build-web-application-with-golang/de/04.1.html
+
+	//Parse the form
+	r.ParseForm()
+	//Check if the parameter exists
+	if r.Form["guess"] != nil {
+		//Try to parse it
+		if guess, err := strconv.Atoi(strings.Join(r.Form["guess"], "")); err == nil {
+			//Return the number and no error
+			return int(guess), nil
+		}
+		//Return the invalid input error
+		return 0, errors.New("Invalid input")
+	}
+
+	/*//Get the guess parameters. It might be more than one
 	guessparam := r.URL.Query().Get("guess")
 	//Check if it is empty
 	if guessparam != "" {
@@ -189,6 +205,7 @@ func getGuessedNumberParameter(r *http.Request) (int, error) {
 		//Return the invalid input error
 		return 0, errors.New("Invalid input")
 	}
+	*/
 	//Return the no parameter present error
 	return 0, errors.New("No parameter present")
 }
