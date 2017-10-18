@@ -28,12 +28,23 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	//Add the handler function for the landing page
 	http.HandleFunc("/", landingPageHandler)
+	//Add bootstrap file handling
+	serveCSSandJS()
 	//Add the handler function for the guess folder
 	http.HandleFunc("/guess/", guessPageHandler)
 	//Add the handler for serving the favicon
 	http.HandleFunc("/favicon.ico", serveFavicon)
 	//Start a webserver which listens at port 8080
 	http.ListenAndServe(":8080", nil)
+}
+
+//Handler for serving the css and js locally
+func serveCSSandJS() {
+	//Adapted from https://stackoverflow.com/questions/43601359/how-do-i-serve-css-and-js-in-go-lang
+	//Serve the css files
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("./css/"))))
+	//Serve the JavaScript files
+	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("./js/"))))
 }
 
 //Handler for favicon
@@ -201,20 +212,6 @@ func getGuessedNumberParameter(r *http.Request) (int, error) {
 		//Return the invalid input error
 		return 0, errors.New("Invalid input")
 	}
-
-	/*//Get the guess parameters. It might be more than one
-	guessparam := r.URL.Query().Get("guess")
-	//Check if it is empty
-	if guessparam != "" {
-		//Try to parse it
-		if guess, err := strconv.Atoi(guessparam); err == nil {
-			//Return the number and no error
-			return int(guess), nil
-		}
-		//Return the invalid input error
-		return 0, errors.New("Invalid input")
-	}
-	*/
 	//Return the no parameter present error
 	return 0, errors.New("No parameter present")
 }
