@@ -30,8 +30,17 @@ func main() {
 	http.HandleFunc("/", landingPageHandler)
 	//Add the handler function for the guess folder
 	http.HandleFunc("/guess/", guessPageHandler)
+	//Add the handler for serving the favicon
+	http.HandleFunc("/favicon.ico", serveFavicon)
 	//Start a webserver which listens at port 8080
 	http.ListenAndServe(":8080", nil)
+}
+
+//Handler for favicon
+func serveFavicon(w http.ResponseWriter, r *http.Request) {
+	//Icon from https://m.veryicon.com/icons/application/ios7-style-metro-ui/metroui-folder-os-game-center.html
+	//Serve the favicon ico
+	http.ServeFile(w, r, "favicon.ico")
 }
 
 //Handler for the landing page
