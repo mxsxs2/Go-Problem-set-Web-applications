@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -34,8 +35,8 @@ func main() {
 	http.HandleFunc("/guess/", guessPageHandler)
 	//Add the handler for serving the favicon
 	http.HandleFunc("/favicon.ico", serveFavicon)
-	//Start a webserver which listens at port 8080
-	http.ListenAndServe(":8080", nil)
+	//Start a webserver which listens at a given port. Default is 8080
+	http.ListenAndServe(fmt.Sprintf(":%d", getPort()), nil)
 }
 
 //Handler for serving the css and js locally
@@ -214,4 +215,50 @@ func getGuessedNumberParameter(r *http.Request) (int, error) {
 	}
 	//Return the no parameter present error
 	return 0, errors.New("No parameter present")
+}
+
+//Function used to find a flag in command line arguments
+func isFlagOn(flag string) bool {
+	//Check if there is any argument supplied
+	if len(os.Args) > 1 {
+		//Loop the arguments
+		for _, arg := range os.Args {
+			//If the flag was found then return true
+			if strings.Compare(arg, flag) == 0 {
+				return true
+			}
+		}
+	}
+	//Return false if there was no result
+	return false
+}
+
+//Function used to get the port from the command line argument
+func getPort() int {
+	//Set 8080 as default port
+	port := 8080
+
+	//Check if there is any argument
+	if len(os.Args) > 1 {
+		//Loop the arguments
+		for i, arg := range os.Args {
+			//If the flag was found and there is a following argument
+			if strings.Compare(arg, "-port") == 0 && len(os.Args) > i+1 {
+				//Try to parse that argument into an int
+				if p, err := strconv.Atoi(os.Args[i+1]); err == nil {
+					//Check if the port is within real parameters
+					//We could check here the reserved ports as well
+					if p > 0 && p < 65536 {
+						//If everything is fine set the port
+						port = p
+						//Exit the loop
+						break
+					}
+				}
+			}
+		}
+	}
+
+	//Return the port
+	return port
 }
